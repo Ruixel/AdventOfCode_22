@@ -1,3 +1,3 @@
 ﻿using AoC22;
 
-Day5.Solve();
+Day10.Solve();
