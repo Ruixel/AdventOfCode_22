@@ -50,7 +50,13 @@ var rockE = new char[,]
 var rocks = new[] {rockA, rockB, rockC, rockD, rockE};
 var rockHeights = new[] {1, 3, 3, 4, 2};
 
-var cave = new char[5000, 7];
+var cave = new char[25000, 7];
+//var caveA = new char[10000, 7];
+//var caveB = new char[10000, 7];
+var testSet = new HashSet<(int, int, int, int, int, int, int, int, int)>();
+var anotherMap = new Dictionary<int, int>();
+
+//var cave = caveA;
 for (int y = 0; y < cave.GetLength(0); y++)
 {
 	for (int x = 0; x < cave.GetLength(1); x++)
@@ -59,7 +65,7 @@ for (int y = 0; y < cave.GetLength(0); y++)
 	}
 }
 
-void RockLoop(char[,] rock, int x, int y, Action<int, int> func)
+void RockLoop(char[,] rock, int x, long y, Action<int, long> func)
 {
 	for (int rx = 0; rx < 4; rx++)
 	{
@@ -76,9 +82,10 @@ void RockLoop(char[,] rock, int x, int y, Action<int, int> func)
 	}
 }
 
-var topY = 3;
+var topY = 3L;
 var windIndex = 0;
-for (int i = 0; i < 2022; i++)
+var check = 50;
+for (long i = 0; i < 2000; i++)
 {
 	var rock = rocks[i % 5];
 	var y = topY;
@@ -134,8 +141,66 @@ for (int i = 0; i < 2022; i++)
 
 	// Add rock
 	RockLoop(rock, x, y, (caveX, caveY) => { cave[caveY, caveX] = '#'; });
-
+	
 	if (y + 3 + rockHeights[i % 5] > topY) topY = y + 3 + rockHeights[i % 5];
+	
+	//DrawCave(Math.Max((int)topY - 15, 0), 20);
+	
+	// how far 
+	//var yum = Math.Max((int) topY  5, 0);
+	var distToBottom = new int[7];
+	for (int caveY = (int)topY; caveY >= Math.Max((int)topY - check, 0); caveY--)
+	{
+		var c = false;
+		for (int caveX = 0; caveX < 7; caveX++)
+		{
+			if (distToBottom[caveX] == 0) c = true;
+			if (cave[caveY, caveX] == '#' && distToBottom[caveX] == 0)
+			{
+				distToBottom[caveX] = (int)topY - caveY;
+			}
+		}
+
+		if (!c) break;
+		//Console.WriteLine();
+	}
+
+	var min = distToBottom.Min();
+	var normalised = distToBottom.Select(p => p - min).ToArray();
+	
+	var hashThing = 0L;
+	for (var j = 0; j < 7; j++)
+	{
+		//if (distToBottom[j] == 0 && topY > 400)
+		//{
+		//	throw new Exception("Not enough");
+		//}
+
+		hashThing += normalised[j] * (j * (long)check);
+		//Console.Write($"{normalised[j]}, ");
+	}
+	//Console.WriteLine();
+
+	//foreach (var dist in distToBottom)
+	//{
+	//	Console.Write($"{dist}, ");
+	//}
+	//Console.WriteLine(hashThing);
+
+	//var hash = (normalised[0], normalised[1], normalised[2], normalised[3], normalised[4], normalised[5], normalised[6], windIndex, (int)i % 5);
+	var hashy = normalised[0].GetHashCode() ^ normalised[1].GetHashCode() ^ normalised[2].GetHashCode() ^ normalised[3].GetHashCode() ^
+		normalised[4].GetHashCode() ^ normalised[5].GetHashCode() ^ normalised[6].GetHashCode() ^ (1000 + windIndex.GetHashCode()) ^ (((int)i % 5).GetHashCode() + 1000000);
+	Console.WriteLine($"hashy: {hashy}");
+	if (anotherMap.ContainsKey(hashy))
+	{
+		Console.WriteLine($"Found something at {i}");
+		Console.WriteLine($"{anotherMap[hashy]}");
+	}
+	else
+	{
+		anotherMap.Add( hashy, (int) i );
+	}
+		
 }
 
 Console.WriteLine($"Part1: {topY - 3}");
